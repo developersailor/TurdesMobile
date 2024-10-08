@@ -5,18 +5,22 @@
  * See the [Backend API Integration](https://docs.infinite.red/ignite-cli/boilerplate/app/services/#backend-api-integration)
  * documentation for more details.
  */
-import {
-  ApiResponse, // @demo remove-current-line
-  ApisauceInstance,
-  create,
-} from "apisauce"
+import { ApiResponse, ApisauceInstance, create } from "apisauce"
 import Config from "../../config"
-import { GeneralApiProblem, getGeneralApiProblem } from "./apiProblem" // @demo remove-current-line
+import { GeneralApiProblem, getGeneralApiProblem } from "./apiProblem"
 import type {
   ApiConfig,
-  ApiFeedResponse, // @demo remove-current-line
+  LoginPayload,
+  LoginResponse,
+  RegisterPayload,
+  RegisterResponse,
+  RefreshPayload,
+  RefreshResponse,
+  AidRequestResponse,
+  AidRequestPayload,
+  AidRequestStatusUpdatePayload,
+  OrganizationResponse,
 } from "./api.types"
-import type { EpisodeSnapshotIn } from "../../models/Episode" // @demo remove-current-line
 
 /**
  * Configuring the apisauce instance.
@@ -48,41 +52,120 @@ export class Api {
     })
   }
 
-  // @demo remove-block-start
-  /**
-   * Gets a list of recent React Native Radio episodes.
-   */
-  async getEpisodes(): Promise<{ kind: "ok"; episodes: EpisodeSnapshotIn[] } | GeneralApiProblem> {
-    // make the api call
-    const response: ApiResponse<ApiFeedResponse> = await this.apisauce.get(
-      `api.json?rss_url=https%3A%2F%2Ffeeds.simplecast.com%2FhEI_f9Dx`,
-    )
-
-    // the typical ways to die when calling an api
+  async login(
+    payload: LoginPayload,
+  ): Promise<{ kind: "ok"; data: LoginResponse } | GeneralApiProblem> {
+    const response: ApiResponse<LoginResponse> = await this.apisauce.post("/api/login", payload)
     if (!response.ok) {
       const problem = getGeneralApiProblem(response)
       if (problem) return problem
     }
-
-    // transform the data into the format we are expecting
-    try {
-      const rawData = response.data
-
-      // This is where we transform the data into the shape we expect for our MST model.
-      const episodes: EpisodeSnapshotIn[] =
-        rawData?.items.map((raw) => ({
-          ...raw,
-        })) ?? []
-
-      return { kind: "ok", episodes }
-    } catch (e) {
-      if (__DEV__ && e instanceof Error) {
-        console.error(`Bad data: ${e.message}\n${response.data}`, e.stack)
-      }
+    if (response.data) {
+      return { kind: "ok", data: response.data }
+    } else {
       return { kind: "bad-data" }
     }
   }
-  // @demo remove-block-end
+
+  async register(
+    payload: RegisterPayload,
+  ): Promise<{ kind: "ok"; data: RegisterResponse } | GeneralApiProblem> {
+    const response: ApiResponse<RegisterResponse> = await this.apisauce.post(
+      "/api/register",
+      payload,
+    )
+    if (!response.ok) {
+      const problem = getGeneralApiProblem(response)
+      if (problem) return problem
+    }
+    if (response.data) {
+      return { kind: "ok", data: response.data }
+    } else {
+      return { kind: "bad-data" }
+    }
+  }
+
+  async refreshToken(
+    payload: RefreshPayload,
+  ): Promise<{ kind: "ok"; data: RefreshResponse } | GeneralApiProblem> {
+    const response: ApiResponse<RefreshResponse> = await this.apisauce.post("/api/refresh", payload)
+    if (!response.ok) {
+      const problem = getGeneralApiProblem(response)
+      if (problem) return problem
+    }
+    if (response.data) {
+      return { kind: "ok", data: response.data }
+    } else {
+      return { kind: "bad-data" }
+    }
+  }
+
+  async getAidRequests(): Promise<{ kind: "ok"; data: AidRequestResponse[] } | GeneralApiProblem> {
+    const response: ApiResponse<AidRequestResponse[]> = await this.apisauce.get("/api/aidrequests")
+    if (!response.ok) {
+      const problem = getGeneralApiProblem(response)
+      if (problem) return problem
+    }
+    if (response.data) {
+      return { kind: "ok", data: response.data }
+    } else {
+      return { kind: "bad-data" }
+    }
+  }
+
+  async createAidRequest(
+    payload: AidRequestPayload,
+  ): Promise<{ kind: "ok"; data: AidRequestResponse } | GeneralApiProblem> {
+    const response: ApiResponse<AidRequestResponse> = await this.apisauce.post(
+      "/api/aidrequests",
+      payload,
+    )
+    if (!response.ok) {
+      const problem = getGeneralApiProblem(response)
+      if (problem) return problem
+    }
+    if (response.data) {
+      return { kind: "ok", data: response.data }
+    } else {
+      return { kind: "bad-data" }
+    }
+  }
+
+  async updateAidRequestStatus(
+    id: number,
+    payload: AidRequestStatusUpdatePayload,
+  ): Promise<{ kind: "ok"; data: AidRequestResponse } | GeneralApiProblem> {
+    const response: ApiResponse<AidRequestResponse> = await this.apisauce.put(
+      `/api/aidrequests/${id}/status`,
+      payload,
+    )
+    if (!response.ok) {
+      const problem = getGeneralApiProblem(response)
+      if (problem) return problem
+    }
+    if (response.data) {
+      return { kind: "ok", data: response.data }
+    } else {
+      return { kind: "bad-data" }
+    }
+  }
+
+  async getOrganizations(): Promise<
+    { kind: "ok"; data: OrganizationResponse[] } | GeneralApiProblem
+  > {
+    const response: ApiResponse<OrganizationResponse[]> = await this.apisauce.get(
+      "/api/organizations",
+    )
+    if (!response.ok) {
+      const problem = getGeneralApiProblem(response)
+      if (problem) return problem
+    }
+    if (response.data) {
+      return { kind: "ok", data: response.data }
+    } else {
+      return { kind: "bad-data" }
+    }
+  }
 }
 
 // Singleton instance of the API for convenience
