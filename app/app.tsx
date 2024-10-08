@@ -20,7 +20,7 @@ import "./utils/gestureHandler"
 import "./i18n"
 import "./utils/ignoreWarnings"
 import { useFonts } from "expo-font"
-import React from "react"
+import React, { useEffect } from "react"
 import { initialWindowMetrics, SafeAreaProvider } from "react-native-safe-area-context"
 import * as Linking from "expo-linking"
 import { useInitialRootStore } from "./models"
@@ -29,6 +29,8 @@ import { ErrorBoundary } from "./screens/ErrorScreen/ErrorBoundary"
 import * as storage from "./utils/storage"
 import { customFontsToLoad } from "./theme"
 import Config from "./config"
+import messaging from "@react-native-firebase/messaging"
+import PushNotification from "react-native-push-notification"
 
 export const NAVIGATION_PERSISTENCE_KEY = "NAVIGATION_STATE"
 
@@ -63,6 +65,52 @@ interface AppProps {
  * @returns {JSX.Element} The rendered `App` component.
  */
 function App(props: AppProps) {
+  useEffect(() => {
+    // Request permission to receive notifications
+    messaging()
+      .requestPermission()
+      .then((authStatus) => {
+        const enabled =
+          authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+          authStatus === messaging.AuthorizationStatus.PROVISIONAL
+
+        if (enabled) {
+          console.log("Authorization status:", authStatus)
+        }
+      })
+
+    // Get the device token
+    messaging()
+      .getToken()
+      .then((token) => {
+        console.log("Device FCM Token:", token)
+      })
+
+    // Create a notification channel
+    PushNotification.createChannel(
+      {
+        channelId: "turdes-notify-channel", // Required
+        channelName: "Default Channel", // Required
+        channelDescription: "A default channel", // Optional
+        soundName: "default", // Optional
+        importance: 4, // Optional (default is 4)
+        vibrate: true, // Optional (default is true)
+      },
+      (created) => console.log(`createChannel returned '${created}'`), // (optional) callback returns whether the channel was created, false means it already existed.
+    )
+
+    // Listen for messages when the app is in the foreground
+    const unsubscribe = messaging().onMessage(async (remoteMessage) => {
+      PushNotification.localNotification({
+        channelId: "default-channel-id", // Required for Android 8.0+
+        title: remoteMessage.notification?.title ?? "No title",
+        message: remoteMessage.notification?.body ?? "No message body",
+      })
+    })
+
+    return unsubscribe
+  }, [])
+
   const { hideSplashScreen } = props
   const {
     initialNavigationState,
