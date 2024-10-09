@@ -1,37 +1,33 @@
-import { Instance, SnapshotOut, types } from "mobx-state-tree"
+import { Instance, SnapshotOut, types, flow } from "mobx-state-tree"
+import { api } from "../services/api"
+import { AuthenticationModel } from "./Authentication"
+import { withSetPropAction } from "./helpers/withSetPropAction"
 
 export const AuthenticationStoreModel = types
-  .model("AuthenticationStore")
-  .props({
-    authToken: types.maybe(types.string),
-    authEmail: "",
+  .model("AuthenticationStore", {
+    authentication: types.optional(AuthenticationModel, {
+      authToken: undefined,
+      authEmail: "",
+      authPassword: "",
+    }), // Default value added here
   })
-  .views((store) => ({
-    get isAuthenticated() {
-      return !!store.authToken
-    },
-    get validationError() {
-      if (store.authEmail.length === 0) return "can't be blank"
-      if (store.authEmail.length < 6) return "must be at least 6 characters"
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(store.authEmail))
-        return "must be a valid email address"
-      return ""
-    },
-  }))
+  .actions(withSetPropAction)
   .actions((store) => ({
-    setAuthToken(value?: string) {
-      store.authToken = value
-    },
-    setAuthEmail(value: string) {
-      store.authEmail = value.replace(/ /g, "")
-    },
-    logout() {
-      store.authToken = undefined
-      store.authEmail = ""
-    },
+    login: flow(function* (email: string, password: string) {
+      try {
+        const response = yield api.login({ email, password })
+        if (response.kind === "ok") {
+          store.authentication.setProp("authToken", response.data.token)
+          store.authentication.setProp("authEmail", email)
+          return { kind: "ok" }
+        } else {
+          return { kind: "error", message: response.kind }
+        }
+      } catch (error) {
+        return { kind: "error", message: (error as Error).message }
+      }
+    }),
   }))
 
 export interface AuthenticationStore extends Instance<typeof AuthenticationStoreModel> {}
 export interface AuthenticationStoreSnapshot extends SnapshotOut<typeof AuthenticationStoreModel> {}
-
-// @demo remove-file

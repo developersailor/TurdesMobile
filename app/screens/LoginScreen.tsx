@@ -5,49 +5,65 @@ import { Button, Icon, Screen, Text, TextField, TextFieldAccessoryProps } from "
 import { useStores } from "../models"
 import { AppStackScreenProps } from "../navigators"
 import { colors, spacing } from "../theme"
+import { navigate } from "../navigators/navigationUtilities" // Import the navigate function
 
 interface LoginScreenProps extends AppStackScreenProps<"Login"> {}
 
-export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_props) {
+export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen({ navigation }) {
   const authPasswordInput = useRef<TextInput>(null)
+  const authConfirmPasswordInput = useRef<TextInput>(null)
 
   const [authPassword, setAuthPassword] = useState("")
+  const [authConfirmPassword, setAuthConfirmPassword] = useState("")
   const [isAuthPasswordHidden, setIsAuthPasswordHidden] = useState(true)
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [isRegistering, setIsRegistering] = useState(false)
   const [attemptsCount, setAttemptsCount] = useState(0)
   const {
-    authenticationStore: { authEmail, setAuthEmail, setAuthToken, validationError },
+    authenticationStore: { authentication, login },
   } = useStores()
 
   useEffect(() => {
-    // Here is where you could fetch credentials from keychain or storage
-    // and pre-fill the form fields.
-    setAuthEmail("ignite@infinite.red")
-    setAuthPassword("ign1teIsAwes0m3")
+    authentication.setProp("authEmail", "john.doe@example.com")
+    setAuthPassword("Password123")
+    setAuthConfirmPassword("Password123")
 
-    // Return a "cleanup" function that React will run when the component unmounts
     return () => {
       setAuthPassword("")
-      setAuthEmail("")
+      setAuthConfirmPassword("")
+      authentication.setProp("authEmail", "")
     }
-  }, [])
+  }, [authentication])
 
-  const error = isSubmitted ? validationError : ""
+  const error = isSubmitted ? authentication.validationError : ""
 
-  function login() {
+  async function handleLogin() {
     setIsSubmitted(true)
     setAttemptsCount(attemptsCount + 1)
 
-    if (validationError) return
+    if (authentication.validationError) return
 
-    // Make a request to your server to get an authentication token.
-    // If successful, reset the fields and set the token.
+    const result = await login(authentication.authEmail, authPassword)
+    if (result.kind === "ok") {
+      setIsSubmitted(false)
+      setAuthPassword("")
+      setAuthConfirmPassword("")
+      navigate("Home") // Use the navigate function to navigate to the Home screen
+    } else {
+      // Handle login error (e.g., show a message to the user)
+      console.error("Login failed:", result.message)
+    }
+  }
+
+  function handleRegister() {
+    setIsSubmitted(true)
+    setAttemptsCount(attemptsCount + 1)
+
+    if (authentication.validationError || authPassword !== authConfirmPassword) return
+
     setIsSubmitted(false)
     setAuthPassword("")
-    setAuthEmail("")
-
-    // We'll mock this with a fake token.
-    setAuthToken(String(Date.now()))
+    setAuthConfirmPassword("")
   }
 
   const PasswordRightAccessory: ComponentType<TextFieldAccessoryProps> = useMemo(
@@ -72,13 +88,18 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
       contentContainerStyle={$screenContentContainer}
       safeAreaEdges={["top", "bottom"]}
     >
-      <Text testID="login-heading" tx="loginScreen.logIn" preset="heading" style={$logIn} />
+      <Text
+        testID="login-heading"
+        tx={isRegistering ? "loginScreen.signUp" : "loginScreen.logIn"}
+        preset="heading"
+        style={$logIn}
+      />
       <Text tx="loginScreen.enterDetails" preset="subheading" style={$enterDetails} />
       {attemptsCount > 2 && <Text tx="loginScreen.hint" size="sm" weight="light" style={$hint} />}
 
       <TextField
-        value={authEmail}
-        onChangeText={setAuthEmail}
+        value={authentication.authEmail}
+        onChangeText={(text) => authentication.setProp("authEmail", text)}
         containerStyle={$textField}
         autoCapitalize="none"
         autoComplete="email"
@@ -102,16 +123,42 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
         secureTextEntry={isAuthPasswordHidden}
         labelTx="loginScreen.passwordFieldLabel"
         placeholderTx="loginScreen.passwordFieldPlaceholder"
-        onSubmitEditing={login}
+        onSubmitEditing={
+          isRegistering ? () => authConfirmPasswordInput.current?.focus() : handleLogin
+        }
         RightAccessory={PasswordRightAccessory}
       />
 
+      {isRegistering && (
+        <TextField
+          ref={authConfirmPasswordInput}
+          value={authConfirmPassword}
+          onChangeText={setAuthConfirmPassword}
+          containerStyle={$textField}
+          autoCapitalize="none"
+          autoComplete="password"
+          autoCorrect={false}
+          secureTextEntry={isAuthPasswordHidden}
+          labelTx="loginScreen.confirmPasswordFieldLabel"
+          placeholderTx="loginScreen.confirmPasswordFieldPlaceholder"
+          onSubmitEditing={handleRegister}
+          RightAccessory={PasswordRightAccessory}
+        />
+      )}
+
       <Button
         testID="login-button"
-        tx="loginScreen.tapToLogIn"
+        tx={isRegistering ? "loginScreen.tapToSignUp" : "loginScreen.tapToLogIn"}
         style={$tapButton}
         preset="reversed"
-        onPress={login}
+        onPress={isRegistering ? handleRegister : handleLogin}
+      />
+
+      <Button
+        testID="toggle-button"
+        tx={isRegistering ? "loginScreen.haveAccount" : "loginScreen.noAccount"}
+        style={$toggleButton}
+        onPress={() => setIsRegistering(!isRegistering)}
       />
     </Screen>
   )
@@ -143,4 +190,6 @@ const $tapButton: ViewStyle = {
   marginTop: spacing.xs,
 }
 
-// @demo remove-file
+const $toggleButton: ViewStyle = {
+  marginTop: spacing.md,
+}

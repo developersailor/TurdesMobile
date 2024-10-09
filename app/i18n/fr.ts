@@ -36,13 +36,19 @@ const fr: Translations = {
   },
   loginScreen: {
     logIn: "Se connecter",
+    signUp: "S'inscrire",
     enterDetails:
       "Entrez vos informations ci-dessous pour débloquer des informations top secrètes. Vous ne devinerez jamais ce que nous avons en attente. Ou peut-être que vous le ferez ; ce n'est pas de la science spatiale ici.",
     emailFieldLabel: "E-mail",
     passwordFieldLabel: "Mot de passe",
+    confirmPasswordFieldLabel: "Confirmer le mot de passe",
     emailFieldPlaceholder: "Entrez votre adresse e-mail",
     passwordFieldPlaceholder: "Mot de passe super secret ici",
+    confirmPasswordFieldPlaceholder: "Confirmez votre mot de passe",
     tapToLogIn: "Appuyez pour vous connecter!",
+    tapToSignUp: "Appuyez pour vous inscrire!",
+    haveAccount: "Vous avez déjà un compte ?",
+    noAccount: "Vous n'avez pas de compte ?",
     hint: "Astuce : vous pouvez utiliser n'importe quelle adresse e-mail et votre mot de passe préféré :)",
   },
   demoNavigator: {

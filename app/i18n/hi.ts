@@ -35,13 +35,19 @@ const hi: Translations = {
   },
   loginScreen: {
     logIn: "लॉग इन करें",
+    signUp: "साइन अप करें",
     enterDetails:
       "सर्वश्रेष्ठ रहस्य पता करने के लिए नीचे अपना विवरण दर्ज करें। आप कभी अनुमान नहीं लगा पाएंगे कि हमारे पास क्या इंतजार कर रहा है। या शायद आप कर सकते हैं; यह रॉकेट साइंस नहीं है।",
     emailFieldLabel: "ईमेल",
     passwordFieldLabel: "पासवर्ड",
+    confirmPasswordFieldLabel: "पासवर्ड की पुष्टि करें",
     emailFieldPlaceholder: "अपना ईमेल पता दर्ज करें",
     passwordFieldPlaceholder: "सुपर सीक्रेट पासवर्ड यहाँ",
+    confirmPasswordFieldPlaceholder: "अपने पासवर्ड की पुष्टि करें",
     tapToLogIn: "लॉग इन करने के लिए टैप करें!",
+    tapToSignUp: "साइन अप करने के लिए टैप करें!",
+    haveAccount: "क्या आपके पास पहले से एक खाता है?",
+    noAccount: "क्या आपके पास खाता नहीं है?",
     hint: "संकेत: आप किसी भी ईमेल पते और अपने पसंदीदा पासवर्ड का उपयोग कर सकते हैं :)",
   },
   demoNavigator: {

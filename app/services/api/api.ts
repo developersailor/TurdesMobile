@@ -55,7 +55,10 @@ export class Api {
   async login(
     payload: LoginPayload,
   ): Promise<{ kind: "ok"; data: LoginResponse } | GeneralApiProblem> {
-    const response: ApiResponse<LoginResponse> = await this.apisauce.post("/api/login", payload)
+    const response: ApiResponse<LoginResponse> = await this.apisauce.post(
+      "/api/auth/login",
+      payload,
+    )
     if (!response.ok) {
       const problem = getGeneralApiProblem(response)
       if (problem) return problem
@@ -71,7 +74,7 @@ export class Api {
     payload: RegisterPayload,
   ): Promise<{ kind: "ok"; data: RegisterResponse } | GeneralApiProblem> {
     const response: ApiResponse<RegisterResponse> = await this.apisauce.post(
-      "/api/register",
+      "/api/auth/register",
       payload,
     )
     if (!response.ok) {
@@ -88,7 +91,10 @@ export class Api {
   async refreshToken(
     payload: RefreshPayload,
   ): Promise<{ kind: "ok"; data: RefreshResponse } | GeneralApiProblem> {
-    const response: ApiResponse<RefreshResponse> = await this.apisauce.post("/api/refresh", payload)
+    const response: ApiResponse<RefreshResponse> = await this.apisauce.post(
+      "/api/auth/refresh",
+      payload,
+    )
     if (!response.ok) {
       const problem = getGeneralApiProblem(response)
       if (problem) return problem

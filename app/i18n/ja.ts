@@ -36,13 +36,19 @@ const ja: Translations = {
   },
   loginScreen: {
     logIn: "ログイン",
+    signUp: "サインアップ",
     enterDetails:
       "ここにあなたの情報を入力してトップシークレットをアンロックしましょう。何が待ち構えているか予想もつかないはずです。はたまたそうでも無いかも - ロケットサイエンスほど複雑なものではありません。",
     emailFieldLabel: "メールアドレス",
     passwordFieldLabel: "パスワード",
+    confirmPasswordFieldLabel: "パスワードを確認",
     emailFieldPlaceholder: "メールアドレスを入力してください",
     passwordFieldPlaceholder: "パスワードを入力してください",
+    confirmPasswordFieldPlaceholder: "パスワードを確認してください",
     tapToLogIn: "タップしてログインしよう！",
+    tapToSignUp: "タップしてサインアップしよう！",
+    haveAccount: "すでにアカウントをお持ちですか？",
+    noAccount: "アカウントをお持ちではないですか？",
     hint: "ヒント: お好みのメールアドレスとパスワードを使ってください :)",
   },
   demoNavigator: {
