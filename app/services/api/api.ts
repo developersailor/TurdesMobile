@@ -172,6 +172,15 @@ export class Api {
       return { kind: "bad-data" }
     }
   }
+
+  async logout(token: string): Promise<{ kind: "ok" } | GeneralApiProblem> {
+    const response: ApiResponse<unknown> = await this.apisauce.post("/api/auth/logout", { token })
+    if (!response.ok) {
+      const problem = getGeneralApiProblem(response)
+      if (problem) return problem
+    }
+    return { kind: "ok" }
+  }
 }
 
 // Singleton instance of the API for convenience

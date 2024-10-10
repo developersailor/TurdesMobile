@@ -5,22 +5,27 @@ import { Button, Icon, Screen, Text, TextField, TextFieldAccessoryProps } from "
 import { useStores } from "../models"
 import { AppStackScreenProps } from "../navigators"
 import { colors, spacing } from "../theme"
-import { navigate } from "../navigators/navigationUtilities" // Import the navigate function
+import { navigate } from "../navigators/navigationUtilities"
 
 interface LoginScreenProps extends AppStackScreenProps<"Login"> {}
 
-export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen({ navigation }) {
+export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen() {
   const authPasswordInput = useRef<TextInput>(null)
   const authConfirmPasswordInput = useRef<TextInput>(null)
-
+  const phoneInput = useRef<TextInput>(null)
+  const nameInput = useRef<TextInput>(null)
   const [authPassword, setAuthPassword] = useState("")
   const [authConfirmPassword, setAuthConfirmPassword] = useState("")
   const [isAuthPasswordHidden, setIsAuthPasswordHidden] = useState(true)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [isRegistering, setIsRegistering] = useState(false)
   const [attemptsCount, setAttemptsCount] = useState(0)
+  const [isLoading, setIsLoading] = useState(false)
+  const [successMessage, setSuccessMessage] = useState("")
+  const [errorMessage, setErrorMessage] = useState("")
+
   const {
-    authenticationStore: { authentication, login },
+    authenticationStore: { authentication, login, register },
   } = useStores()
 
   useEffect(() => {
@@ -38,32 +43,36 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen({
   const error = isSubmitted ? authentication.validationError : ""
 
   async function handleLogin() {
+    setIsLoading(true)
+    const result = await login(authentication.authEmail, authPassword)
+    setIsLoading(false)
+    if (result.kind === "ok") {
+      setSuccessMessage("Login successful!")
+      setTimeout(() => navigate("Home"), 1000)
+    } else {
+      setErrorMessage("Login failed: " + result.message)
+    }
+  }
+
+  async function handleRegister() {
     setIsSubmitted(true)
     setAttemptsCount(attemptsCount + 1)
 
-    if (authentication.validationError) return
+    if (authentication.validationError || authPassword !== authConfirmPassword) {
+      setErrorMessage("Passwords do not match or validation error.")
+      return
+    }
 
-    const result = await login(authentication.authEmail, authPassword)
+    const result = await register()
     if (result.kind === "ok") {
       setIsSubmitted(false)
       setAuthPassword("")
       setAuthConfirmPassword("")
-      navigate("Home") // Use the navigate function to navigate to the Home screen
+      setSuccessMessage("Registration successful!")
+      setTimeout(() => navigate("Home"), 1000)
     } else {
-      // Handle login error (e.g., show a message to the user)
-      console.error("Login failed:", result.message)
+      setErrorMessage("Registration failed: " + result.message)
     }
-  }
-
-  function handleRegister() {
-    setIsSubmitted(true)
-    setAttemptsCount(attemptsCount + 1)
-
-    if (authentication.validationError || authPassword !== authConfirmPassword) return
-
-    setIsSubmitted(false)
-    setAuthPassword("")
-    setAuthConfirmPassword("")
   }
 
   const PasswordRightAccessory: ComponentType<TextFieldAccessoryProps> = useMemo(
@@ -96,6 +105,9 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen({
       />
       <Text tx="loginScreen.enterDetails" preset="subheading" style={$enterDetails} />
       {attemptsCount > 2 && <Text tx="loginScreen.hint" size="sm" weight="light" style={$hint} />}
+
+      {errorMessage ? <Text style={$errorMessage}>{errorMessage}</Text> : null}
+      {successMessage ? <Text style={$successMessage}>{successMessage}</Text> : null}
 
       <TextField
         value={authentication.authEmail}
@@ -130,20 +142,47 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen({
       />
 
       {isRegistering && (
-        <TextField
-          ref={authConfirmPasswordInput}
-          value={authConfirmPassword}
-          onChangeText={setAuthConfirmPassword}
-          containerStyle={$textField}
-          autoCapitalize="none"
-          autoComplete="password"
-          autoCorrect={false}
-          secureTextEntry={isAuthPasswordHidden}
-          labelTx="loginScreen.confirmPasswordFieldLabel"
-          placeholderTx="loginScreen.confirmPasswordFieldPlaceholder"
-          onSubmitEditing={handleRegister}
-          RightAccessory={PasswordRightAccessory}
-        />
+        <>
+          <TextField
+            ref={authConfirmPasswordInput}
+            value={authConfirmPassword}
+            onChangeText={setAuthConfirmPassword}
+            containerStyle={$textField}
+            autoCapitalize="none"
+            autoComplete="password"
+            autoCorrect={false}
+            secureTextEntry={isAuthPasswordHidden}
+            labelTx="loginScreen.confirmPasswordFieldLabel"
+            placeholderTx="loginScreen.confirmPasswordFieldPlaceholder"
+            onSubmitEditing={handleRegister}
+            RightAccessory={PasswordRightAccessory}
+          />
+          <TextField
+            ref={phoneInput}
+            value={authentication.phone}
+            onChangeText={(text) => authentication.setProp("phone", text)}
+            containerStyle={$textField}
+            autoCapitalize="none"
+            autoComplete="tel"
+            autoCorrect={false}
+            keyboardType="phone-pad"
+            labelTx="registerScreen.phoneFieldLabel"
+            placeholderTx="registerScreen.phoneFieldPlaceholder"
+            onSubmitEditing={() => nameInput.current?.focus()}
+          />
+          <TextField
+            ref={nameInput}
+            value={authentication.name}
+            onChangeText={(text) => authentication.setProp("name", text)}
+            containerStyle={$textField}
+            autoCapitalize="none"
+            autoComplete="name"
+            autoCorrect={false}
+            labelTx="registerScreen.nameFieldLabel"
+            placeholderTx="registerScreen.nameFieldPlaceholder"
+            onSubmitEditing={handleRegister}
+          />
+        </>
       )}
 
       <Button
@@ -152,6 +191,7 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen({
         style={$tapButton}
         preset="reversed"
         onPress={isRegistering ? handleRegister : handleLogin}
+        disabled={isLoading}
       />
 
       <Button
@@ -192,4 +232,14 @@ const $tapButton: ViewStyle = {
 
 const $toggleButton: ViewStyle = {
   marginTop: spacing.md,
+}
+
+const $errorMessage: TextStyle = {
+  color: "red",
+  marginBottom: spacing.md,
+}
+
+const $successMessage: TextStyle = {
+  color: "green",
+  marginBottom: spacing.md,
 }

@@ -90,6 +90,10 @@ export interface OrganizationResponse {
   createdAt: string
   updatedAt: string
 }
+
+export interface LogoutPayload {
+  token: string
+}
 /**
  * The options used to configure apisauce.
  */
