@@ -22,6 +22,7 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen() {
     <Screen style={$root} preset="scroll">
       <Text text="home" />
       <Button text="Logout" onPress={handleLogout} style={$logoutButton} />
+      <Button text="Aid Request" onPress={() => navigate("AidRequest")} />
     </Screen>
   )
 })

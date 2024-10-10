@@ -50,14 +50,23 @@ export interface RefreshResponse {
 }
 
 export interface AidRequestResponse {
-  id: number
-  type: string
+  id: string
+
+  title: string
+
   description: string
+
   status: string
-  organizationId: number
-  userId: number
-  createdAt: string
-  updatedAt: string
+
+  type: string
+
+  organizationId: string
+
+  userId: string
+
+  createdAt: Date
+
+  updatedAt: Date
 }
 
 export interface AidRequestPayload {
@@ -69,10 +78,20 @@ export interface AidRequestPayload {
 }
 
 export interface AidRequestStatusUpdatePayload {
+  id: number
   status: string
   deviceToken: string
 }
 
+export interface AidRequestStatusUpdateResponse {
+  message: string
+}
+export interface AidRequestRemovePayload {
+  id: number
+}
+export interface AidRequestRemoveResponse {
+  message: string
+}
 export interface OrganizationPayload {
   id: number
   name: string

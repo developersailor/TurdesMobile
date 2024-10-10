@@ -137,6 +137,15 @@ export class Api {
     }
   }
 
+  async deleteAidRequest(id: string): Promise<{ kind: "ok" } | GeneralApiProblem> {
+    const response: ApiResponse<unknown> = await this.apisauce.delete(`/api/aidrequests/${id}`)
+    if (!response.ok) {
+      const problem = getGeneralApiProblem(response)
+      if (problem) return problem
+    }
+    return { kind: "ok" }
+  }
+
   async updateAidRequestStatus(
     id: number,
     payload: AidRequestStatusUpdatePayload,
