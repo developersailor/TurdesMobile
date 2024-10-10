@@ -3,7 +3,7 @@ import { withSetPropAction } from "./helpers/withSetPropAction"
 
 export const AuthenticationModel = types
   .model("Authentication", {
-    authToken: types.maybe(types.string),
+    token: types.maybe(types.string),
     authEmail: types.string,
     authPassword: types.string,
     confirmPassword: types.string,
@@ -15,7 +15,7 @@ export const AuthenticationModel = types
   })
   .views((self) => ({
     get isAuthenticated() {
-      return !!self.authToken
+      return !!self.token
     },
     get validationError() {
       if (self.authEmail.length === 0) return "Email can't be blank"
@@ -33,7 +33,7 @@ export const AuthenticationModel = types
   .actions(withSetPropAction)
   .actions((self) => ({
     logout() {
-      self.authToken = undefined
+      self.token = undefined
       self.authEmail = ""
       self.authPassword = ""
       self.confirmPassword = ""
@@ -56,7 +56,7 @@ export interface AuthenticationSnapshotOut extends SnapshotOut<typeof Authentica
 export interface AuthenticationSnapshotIn extends SnapshotIn<typeof AuthenticationModel> {}
 export const createAuthenticationDefaultModel = () =>
   types.optional(AuthenticationModel, {
-    authToken: undefined,
+    token: "",
     authEmail: "",
     authPassword: "",
     confirmPassword: "",

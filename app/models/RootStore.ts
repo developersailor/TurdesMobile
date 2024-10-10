@@ -9,7 +9,7 @@ export const RootStoreModel = types.model("RootStore").props({
   aidRequestStore: types.optional(AidRequestStoreModel, {} as any),
   authenticationStore: types.optional(AuthenticationStoreModel, {
     authentication: {
-      authToken: undefined,
+      token: "",
       authEmail: "",
       authPassword: "",
       confirmPassword: "",

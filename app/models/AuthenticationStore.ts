@@ -22,7 +22,7 @@ export const AuthenticationStoreModel = types
       try {
         const response = yield api.login({ email, password })
         if (response.kind === "ok") {
-          store.authentication.setProp("authToken", response.data.token)
+          store.authentication.setProp("token", response.data.token)
           store.authentication.setProp("authEmail", email)
           store.authentication.setStatus("success") // Doğru kullanım
           return { kind: "ok" }
@@ -40,7 +40,7 @@ export const AuthenticationStoreModel = types
     // Diğer aksiyonlar...
     logout: flow(function* () {
       try {
-        const token = store.authentication.authToken
+        const token = store.authentication.token
         if (token) {
           const response = yield api.logout(token)
           if (response.kind === "ok") {

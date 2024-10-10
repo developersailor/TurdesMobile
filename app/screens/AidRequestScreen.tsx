@@ -1,8 +1,16 @@
 import React, { FC, useEffect } from "react"
 import { observer } from "mobx-react-lite"
-import { ViewStyle, ActivityIndicator, Alert, TouchableOpacity, Text, View } from "react-native"
-import { AppStackScreenProps } from "app/navigators"
-import { Screen, ListView, ListItem } from "app/components"
+import {
+  ViewStyle,
+  ActivityIndicator,
+  Alert,
+  TouchableOpacity,
+  Text,
+  View,
+  TextStyle,
+} from "react-native"
+import { AppStackScreenProps, navigate } from "app/navigators"
+import { Screen, ListView, ListItem, Button } from "app/components"
 import { useStores } from "app/models"
 import { AidRequestResponse } from "app/services/api"
 import { toJS } from "mobx" // MST'den JavaScript objesine dönüşüm için
@@ -10,12 +18,19 @@ import { toJS } from "mobx" // MST'den JavaScript objesine dönüşüm için
 interface AidRequestScreenProps extends AppStackScreenProps<"AidRequest"> {}
 
 export const AidRequestScreen: FC<AidRequestScreenProps> = observer(function AidRequestScreen() {
-  const { aidRequestStore } = useStores()
-  console.log(toJS(aidRequestStore.aidRequests))
+  const { aidRequestStore, authenticationStore } = useStores()
+  const token = authenticationStore.authentication?.token // Get the token from the authentication store
+  console.log("Token:", token)
+  console.log("Aid Requests before fetch:", toJS(aidRequestStore.aidRequests))
 
   useEffect(() => {
-    aidRequestStore.fetchAidRequests()
-  }, [aidRequestStore])
+    if (token) {
+      console.log("Fetching aid requests with token:", token)
+      aidRequestStore.fetchAidRequests(token)
+    }
+  }, [aidRequestStore, token])
+
+  console.log("Aid Requests after fetch:", toJS(aidRequestStore.aidRequests))
 
   const handleDelete = (id: string) => {
     Alert.alert(
@@ -28,13 +43,7 @@ export const AidRequestScreen: FC<AidRequestScreenProps> = observer(function Aid
       { cancelable: true },
     )
   }
-  if (aidRequestStore.aidRequests.length === 0) {
-    return (
-      <Screen style={$root}>
-        <Text>No aid requests available.</Text>
-      </Screen>
-    )
-  }
+
   if (aidRequestStore.isLoading) {
     return (
       <Screen style={$root}>
@@ -47,31 +56,56 @@ export const AidRequestScreen: FC<AidRequestScreenProps> = observer(function Aid
     return (
       <Screen style={$root}>
         <Text style={$errorText}>{`Error: ${aidRequestStore.error}`}</Text>
+        <Button
+          onPress={() => {
+            navigate("Login")
+          }}
+        >
+          <Text>Logout</Text>
+        </Button>
+      </Screen>
+    )
+  }
+
+  if (aidRequestStore.aidRequests.length === 0) {
+    return (
+      <Screen style={$root}>
+        <Text>No aid requests available.</Text>
+        <Button
+          onPress={() => {
+            authenticationStore.logout()
+            navigate("Login")
+          }}
+        >
+          <Text>Logout</Text>
+        </Button>
       </Screen>
     )
   }
 
   return (
-    <ListView
-      data={toJS(aidRequestStore.aidRequests)}
-      estimatedItemSize={100}
-      estimatedListSize={{ height: 300, width: 300 }}
-      renderItem={({ item }: { item: AidRequestResponse }) => (
-        <ListItem>
-          <Text>{item.description}</Text>
-          <Text>{item.status}</Text>
-          <Text>{item.type}</Text>
-          <Text>{item.organizationId}</Text>
-          <Text>{item.userId}</Text>
+    <Screen style={$root}>
+      <ListView
+        data={toJS(aidRequestStore.aidRequests)}
+        estimatedItemSize={100}
+        estimatedListSize={{ height: 300, width: 300 }}
+        renderItem={({ item }: { item: AidRequestResponse }) => (
+          <ListItem>
+            <Text>{item.description}</Text>
+            <Text>{item.status}</Text>
+            <Text>{item.type}</Text>
+            <Text>{item.organizationId}</Text>
+            <Text>{item.userId}</Text>
 
-          <TouchableOpacity onPress={() => handleDelete(item.id)}>
-            <View style={$deleteButton}>
-              <Text style={$deleteButtonText}>Delete</Text>
-            </View>
-          </TouchableOpacity>
-        </ListItem>
-      )}
-    />
+            <TouchableOpacity onPress={() => handleDelete(item.id)}>
+              <View style={$deleteButton}>
+                <Text style={$deleteButtonText}>Delete</Text>
+              </View>
+            </TouchableOpacity>
+          </ListItem>
+        )}
+      />
+    </Screen>
   )
 })
 
@@ -86,10 +120,10 @@ const $deleteButton: ViewStyle = {
   borderRadius: 5,
 }
 
-const $deleteButtonText: ViewStyle = {
-  backgroundColor: "white",
+const $deleteButtonText: TextStyle = {
+  color: "white",
 }
 
-const $errorText: ViewStyle = {
-  backgroundColor: "red",
+const $errorText: TextStyle = {
+  color: "red",
 }

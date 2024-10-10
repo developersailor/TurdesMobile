@@ -37,7 +37,7 @@ export const DEFAULT_API_CONFIG: ApiConfig = {
 export class Api {
   apisauce: ApisauceInstance
   config: ApiConfig
-
+  token: string | null = null
   /**
    * Set up our API instance. Keep this lightweight!
    */
@@ -50,6 +50,11 @@ export class Api {
         Accept: "application/json",
       },
     })
+  }
+
+  setToken(token: string) {
+    this.token = token
+    this.apisauce.setHeader("Authorization", `Bearer ${token}`)
   }
 
   async login(
@@ -106,17 +111,14 @@ export class Api {
     }
   }
 
-  async getAidRequests(): Promise<{ kind: "ok"; data: AidRequestResponse[] } | GeneralApiProblem> {
+  async getAidRequests(): Promise<
+    { kind: "ok"; data: AidRequestResponse[] | undefined } | GeneralApiProblem
+  > {
     const response: ApiResponse<AidRequestResponse[]> = await this.apisauce.get("/api/aidrequests")
     if (!response.ok) {
-      const problem = getGeneralApiProblem(response)
-      if (problem) return problem
-    }
-    if (response.data) {
-      return { kind: "ok", data: response.data }
-    } else {
       return { kind: "bad-data" }
     }
+    return { kind: "ok", data: response.data }
   }
 
   async createAidRequest(
