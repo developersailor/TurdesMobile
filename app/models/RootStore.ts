@@ -7,21 +7,7 @@ import { AuthenticationStoreModel } from "./AuthenticationStore" // @demo remove
  */
 export const RootStoreModel = types.model("RootStore").props({
   aidRequestStore: types.optional(AidRequestStoreModel, {} as any),
-  authenticationStore: types.optional(AuthenticationStoreModel, {
-    authentication: {
-      token: "",
-      authEmail: "",
-      authPassword: "",
-      confirmPassword: "",
-      phone: "",
-      name: "",
-      role: "aid_recipient",
-      status: "idle",
-      errorMessage: undefined,
-    },
-    status: "idle",
-    errorMessage: undefined,
-  }),
+  authenticationStore: types.optional(AuthenticationStoreModel, {} as any), // @demo remove-current-line
 })
 
 /**

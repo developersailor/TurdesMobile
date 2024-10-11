@@ -1,82 +1,87 @@
 import { Instance, SnapshotOut, types, flow } from "mobx-state-tree"
-import { api, RegisterPayload } from "../services/api"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 import { AuthenticationModel } from "./Authentication"
-import { withSetPropAction } from "./helpers/withSetPropAction"
+import { api } from "../services/api"
+import {
+  LoginPayload,
+  RegisterPayload,
+  LoginResponse,
+  RegisterResponse,
+} from "../services/api/api.types"
+import { GeneralApiProblem } from "app/services/api/apiProblem"
+import { saveString } from "app/utils/storage"
 
 export const AuthenticationStoreModel = types
   .model("AuthenticationStore", {
-    authentication: AuthenticationModel,
-    status: types.optional(types.string, "idle"), // "idle", "loading", "success", "error"
-    errorMessage: types.maybe(types.string),
+    authentication: types.optional(AuthenticationModel, {}),
   })
-  .actions(withSetPropAction)
   .actions((store) => ({
-    setStatus(newStatus: string) {
-      store.status = newStatus
-    },
-    setError(message: string) {
-      store.errorMessage = message
-    },
-    login: flow(function* (email: string, password: string) {
-      store.authentication.setStatus("loading") // Doğru kullanım
+    login: flow(function* (
+      payload: LoginPayload,
+    ): Generator<
+      Promise<{ kind: "ok"; data: LoginResponse } | GeneralApiProblem>,
+      { kind: "ok"; data: LoginResponse } | GeneralApiProblem,
+      { kind: "ok"; data: LoginResponse } | GeneralApiProblem
+    > {
+      store.authentication.setStatus("loading")
       try {
-        const response = yield api.login({ email, password })
-        if (response.kind === "ok") {
-          store.authentication.setProp("token", response.data.token)
-          store.authentication.setProp("authEmail", email)
-          store.authentication.setStatus("success") // Doğru kullanım
-          return { kind: "ok" }
+        const response = yield api.login(payload)
+        if (response.kind === "ok" && response.data.token) {
+          store.authentication.setToken(response.data.token)
+          store.authentication.setStatus("success")
+          saveString("token", response.data.token)
         } else {
-          store.authentication.setStatus("error") // Doğru kullanım
-          store.authentication.setError("Login failed: " + response.kind) // Doğru kullanım
-          return { kind: "error", message: response.kind }
+          store.authentication.setError(
+            response.kind !== "ok" ? response.kind || "Login failed" : "Login failed",
+          )
+          store.authentication.setStatus("error")
         }
-      } catch (error) {
-        store.authentication.setStatus("error") // Doğru kullanım
-        store.authentication.setError("Login error: " + (error as Error).message) // Doğru kullanım
-        return { kind: "error", message: (error as Error).message }
+        return response
+      } catch (error: unknown) {
+        store.authentication.setError((error as Error).message)
+        store.authentication.setStatus("error")
+        return {
+          kind: "bad-data",
+        }
       }
     }),
-    // Diğer aksiyonlar...
+    register: flow(function* (
+      payload: RegisterPayload,
+    ): Generator<
+      Promise<{ kind: "ok"; data: RegisterResponse } | GeneralApiProblem>,
+      { kind: "ok"; data: RegisterResponse } | GeneralApiProblem,
+      { kind: "ok"; data: RegisterResponse } | GeneralApiProblem
+    > {
+      store.authentication.setStatus("loading")
+      try {
+        const response = yield api.register(payload)
+        if (response.kind === "ok") {
+          store.authentication.setToken(response.data.token)
+          store.authentication.setStatus("success")
+        } else {
+          store.authentication.setError(
+            response.kind === "bad-data" ? response.kind : "Registration failed",
+          )
+          store.authentication.setStatus("error")
+        }
+        return response
+      } catch (error: unknown) {
+        store.authentication.setError((error as Error).message)
+        store.authentication.setStatus("error")
+        return {
+          kind: "bad-data",
+        }
+      }
+    }),
+    loadToken: flow(function* () {
+      const token = yield AsyncStorage.getItem("token")
+      if (token) {
+        store.authentication.setToken(token)
+      }
+    }),
     logout: flow(function* () {
-      try {
-        const token = store.authentication.token
-        if (token) {
-          const response = yield api.logout(token)
-          if (response.kind === "ok") {
-            store.authentication.logout() // Call the logout action from AuthenticationModel
-          } else {
-            console.error("Logout failed:", response.kind)
-          }
-        }
-      } catch (error) {
-        console.error("Logout error:", (error as Error).message)
-      }
-    }),
-    register: flow(function* () {
-      store.authentication.setStatus("loading") // Doğru kullanım
-      try {
-        const registerPayload: RegisterPayload = {
-          email: store.authentication.authEmail,
-          password: store.authentication.authPassword,
-          phone: store.authentication.phone,
-          name: store.authentication.name,
-          role: "aid_recipient",
-        }
-        const response = yield api.register(registerPayload)
-        if (response.kind === "ok") {
-          store.authentication.setStatus("success") // Doğru kullanım
-          return { kind: "ok" }
-        } else {
-          store.authentication.setStatus("error") // Doğru kullanım
-          store.authentication.setError("Registration failed: " + response.kind) // Doğru kullanım
-          return { kind: "error", message: response.kind }
-        }
-      } catch (error: any) {
-        store.authentication.setStatus("error") // Doğru kullanım
-        store.authentication.setError("Registration error: " + error.message) // Doğru kullanım
-        return { kind: "error", message: error.message }
-      }
+      store.authentication.setToken("")
+      yield AsyncStorage.removeItem("token")
     }),
   }))
 

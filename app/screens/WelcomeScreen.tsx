@@ -33,7 +33,7 @@ export const WelcomeScreen: FC<WelcomeScreenProps> = observer(function WelcomeSc
   useHeader(
     {
       rightTx: "common.logOut",
-      onRightPress: logout,
+      onLeftPress: logout,
     },
     [logout],
   )

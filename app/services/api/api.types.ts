@@ -8,23 +8,26 @@ export interface LoginPayload {
 }
 
 export interface LoginResponse {
-  accessToken: string
-  refreshToken: string
+  token?: string
+  message?: string
 }
 
 export interface RegisterPayload {
-  name: string
   email: string
-  phone: string
   password: string
+  name: string
+  phone: string
   role: string
 }
 
 export interface RegisterResponse {
-  message: string
-  user: User
+  token: string
+  refreshToken: string
 }
 
+export interface LogoutPayload {
+  token: string
+}
 export interface User {
   id: number
   name: string
@@ -110,9 +113,6 @@ export interface OrganizationResponse {
   updatedAt: string
 }
 
-export interface LogoutPayload {
-  token: string
-}
 /**
  * The options used to configure apisauce.
  */

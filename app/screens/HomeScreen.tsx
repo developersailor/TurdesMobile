@@ -4,7 +4,7 @@ import React, { FC } from "react"
 import { ViewStyle } from "react-native"
 import { AppStackScreenProps } from "app/navigators"
 import { useStores } from "app/models"
-import { navigate } from "app/navigators/navigationUtilities"
+import { goBack, navigate } from "app/navigators/navigationUtilities"
 
 interface HomeScreenProps extends AppStackScreenProps<"Home"> {}
 
@@ -15,7 +15,7 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen() {
   // Handle logout
   const handleLogout = () => {
     authenticationStore.logout()
-    navigate("Login")
+    goBack()
   }
 
   return (

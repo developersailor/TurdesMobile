@@ -35,7 +35,7 @@ export type AppStackParamList = {
   // 🔥 Your screens go here
   Home: undefined
   AidRequest: undefined
-	// IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
+  // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
 }
 
 /**
@@ -62,10 +62,10 @@ const AppStack = observer(function AppStack() {
   return (
     <Stack.Navigator
       screenOptions={{ headerShown: false, navigationBarColor: colors.background }}
-      initialRouteName={authentication.isAuthenticated ? "Welcome" : "Login"} // @demo remove-current-line
+      initialRouteName={authentication.token ? "Welcome" : "Login"} // @demo remove-current-line
     >
       {/* @demo remove-block-start */}
-      {authentication.isAuthenticated ? (
+      {authentication.token ? (
         <>
           {/* @demo remove-block-end */}
           <Stack.Screen name="Welcome" component={Screens.WelcomeScreen} />
@@ -79,7 +79,7 @@ const AppStack = observer(function AppStack() {
       {/** 🔥 Your screens go here */}
       <Stack.Screen name="Home" component={Screens.HomeScreen} />
       <Stack.Screen name="AidRequest" component={Screens.AidRequestScreen} />
-			{/* IGNITE_GENERATOR_ANCHOR_APP_STACK_SCREENS */}
+      {/* IGNITE_GENERATOR_ANCHOR_APP_STACK_SCREENS */}
     </Stack.Navigator>
   )
 })

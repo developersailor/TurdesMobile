@@ -1,8 +1,12 @@
 import { Instance, SnapshotOut, types, flow } from "mobx-state-tree"
-import { AidRequestPayload, AidRequestStatusUpdatePayload, api } from "../services/api"
+import {
+  AidRequestPayload,
+  AidRequestResponse,
+  AidRequestStatusUpdatePayload,
+  api,
+} from "../services/api"
 import { AidRequestModel } from "./AidRequest"
 import { withSetPropAction } from "./helpers/withSetPropAction"
-
 export const AidRequestStoreModel = types
   .model("AidRequestStore", {
     aidRequests: types.array(AidRequestModel),
@@ -82,7 +86,7 @@ export const AidRequestStoreModel = types
         if (response.kind === "ok" && Array.isArray(response.data)) {
           store.setProp(
             "aidRequests",
-            response.data.map((item: any) => AidRequestModel.create(item)),
+            response.data.map((item: AidRequestResponse) => AidRequestModel.create(item)),
           )
         } else {
           store.setProp("error", response.message || "Failed to fetch aid requests")

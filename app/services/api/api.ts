@@ -10,7 +10,6 @@ import Config from "../../config"
 import { GeneralApiProblem, getGeneralApiProblem } from "./apiProblem"
 import type {
   ApiConfig,
-  LoginPayload,
   LoginResponse,
   RegisterPayload,
   RegisterResponse,
@@ -20,6 +19,7 @@ import type {
   AidRequestPayload,
   AidRequestStatusUpdatePayload,
   OrganizationResponse,
+  LoginPayload,
 } from "./api.types"
 
 /**
@@ -52,7 +52,7 @@ export class Api {
     })
   }
 
-  setToken(token: string) {
+  setToken(token: string | null) {
     this.token = token
     this.apisauce.setHeader("Authorization", `Bearer ${token}`)
   }
@@ -75,6 +75,7 @@ export class Api {
     }
   }
 
+  // Similar changes for register
   async register(
     payload: RegisterPayload,
   ): Promise<{ kind: "ok"; data: RegisterResponse } | GeneralApiProblem> {
