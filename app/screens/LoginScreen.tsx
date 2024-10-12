@@ -31,9 +31,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = observer(function LoginSc
     try {
       const response = await authenticationStore.login({ email, password })
       if (response.kind === "ok") {
-        navigate("AidRequest") // Navigate to AidRequest screen upon successful login
+        navigate("AidRequest")
       } else {
-        Alert.alert("Login failed", response.kind || "An error occurred during login.")
+        setErrorMessage(response.kind || "Login failed")
       }
     } catch (error) {
       Alert.alert("Login failed", "An error occurred during login.")

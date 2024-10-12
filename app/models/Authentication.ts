@@ -11,18 +11,16 @@ export const AuthenticationModel = types
     errorMessage: types.maybe(types.string),
   })
   .actions((self) => ({
-    setProp(key: string, value: any) {
-      ;(self as any)[key] = value
-    },
-    setError(message: string) {
-      self.errorMessage = message
+    setToken(newToken: string) {
+      self.token = newToken
     },
     setStatus(newStatus: "idle" | "loading" | "success" | "error") {
       self.status = newStatus
     },
-    setToken(token: string) {
-      self.token = token
+    setError(message: string) {
+      self.errorMessage = message
+    },
+    clearError() {
+      self.errorMessage = ""
     },
   }))
-
-export const createAuthenticationStore = () => AuthenticationModel.create({})

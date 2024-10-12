@@ -1,8 +1,7 @@
-import React, { useEffect } from "react"
+import React from "react"
 import { observer } from "mobx-react-lite"
 import { ActivityIndicator } from "react-native"
 import { useStores } from "../models"
-import { loadString } from "../utils/storage"
 import { toJS } from "mobx"
 import { AppStackScreenProps } from "app/navigators/AppNavigator"
 
@@ -13,18 +12,10 @@ interface AidRequestProps extends AppStackScreenProps<"AidRequest"> {}
 export const AidRequestScreen: React.FC<AidRequestProps> = observer(() => {
   const { aidRequestStore } = useStores()
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const token = await loadString("token")
-      console.log("Aid Requests before fetch:", toJS(aidRequestStore.aidRequests))
-      if (token) {
-        await aidRequestStore.fetchAidRequests(token)
-      }
-    }
-
-    fetchData()
-  }, [aidRequestStore])
-
+  const fetchData = async () => {
+    console.log("Aid Requests before fetch:", toJS(aidRequestStore.aidRequests))
+    await aidRequestStore.fetchAidRequests()
+  }
   if (aidRequestStore.isLoading) {
     return <ActivityIndicator size="large" color="#0000ff" />
   }
@@ -39,10 +30,7 @@ export const AidRequestScreen: React.FC<AidRequestProps> = observer(() => {
       keyExtractor={(item) => item.id}
       refreshing={aidRequestStore.isLoading}
       onRefresh={async () => {
-        const token = await loadString("token")
-        if (token) {
-          await aidRequestStore.fetchAidRequests(token)
-        }
+        await fetchData()
       }}
       onEndReached={() => {
         console.log("End reached")

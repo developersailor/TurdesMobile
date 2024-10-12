@@ -7,6 +7,8 @@ import {
 } from "../services/api"
 import { AidRequestModel } from "./AidRequest"
 import { withSetPropAction } from "./helpers/withSetPropAction"
+import { loadString } from "app/utils/storage"
+
 export const AidRequestStoreModel = types
   .model("AidRequestStore", {
     aidRequests: types.array(AidRequestModel),
@@ -19,15 +21,14 @@ export const AidRequestStoreModel = types
       store.setProp("isLoading", true)
       try {
         const response = yield api.createAidRequest(aidRequestPayload)
-        console.log("Create Aid Request Response:", response) // Detailed log of the response
         if (response.kind === "ok") {
-          store.aidRequests.push(response.data)
+          store.aidRequests.push(AidRequestModel.create(response.data))
         } else {
           store.setProp("error", response.message || "Failed to create aid request")
         }
       } catch (error: any) {
-        console.error("Create Aid Request Error:", error) // Log the error
-        store.setProp("error", (error as Error).message)
+        console.error("Create Aid Request Error:", error)
+        store.setProp("error", (error as Error).message || "An unexpected error occurred")
       } finally {
         store.setProp("isLoading", false)
       }
@@ -39,29 +40,28 @@ export const AidRequestStoreModel = types
       store.setProp("isLoading", true)
       try {
         const response = yield api.updateAidRequestStatus(aidRequestId, aidRequestUpdatePayload)
-        console.log("Update Aid Request Response:", response) // Detailed log of the response
         if (response.kind === "ok") {
           const index = store.aidRequests.findIndex(
             (request) => Number(request.id) === aidRequestId,
           )
           if (index !== -1) {
-            store.aidRequests[index] = response.data
+            store.aidRequests[index] = AidRequestModel.create(response.data)
           }
         } else {
           store.setProp("error", response.message || "Failed to update aid request")
         }
       } catch (error: any) {
-        console.error("Update Aid Request Error:", error) // Log the error
-        store.setProp("error", (error as Error).message)
+        console.error("Update Aid Request Error:", error)
+        store.setProp("error", (error as Error).message || "An unexpected error occurred")
       } finally {
         store.setProp("isLoading", false)
       }
     }),
+
     deleteAidRequest: flow(function* (id: string) {
       store.setProp("isLoading", true)
       try {
         const response = yield api.deleteAidRequest(id)
-        console.log("Delete Aid Request Response:", response) // Detailed log of the response
         if (response.kind === "ok") {
           store.setProp(
             "aidRequests",
@@ -71,18 +71,29 @@ export const AidRequestStoreModel = types
           store.setProp("error", response.message || "Failed to delete aid request")
         }
       } catch (error: any) {
-        console.error("Delete Aid Request Error:", error) // Log the error
-        store.setProp("error", (error as Error).message)
+        console.error("Delete Aid Request Error:", error)
+        store.setProp("error", (error as Error).message || "An unexpected error occurred")
       } finally {
         store.setProp("isLoading", false)
       }
     }),
-    fetchAidRequests: flow(function* (token: string) {
+
+    fetchAidRequests: flow(function* () {
       store.setProp("isLoading", true)
       try {
-        api.setToken(token) // Set the token before making the API call
+        // 1. Retrieve the token from AsyncStorage
+        const token = yield loadString("token")
+
+        if (!token) {
+          store.setProp("error", "Token not found. Please login.")
+          return
+        }
+
+        // 2. Set token in the API headers
+        api.setToken(token)
+
+        // 3. Make the API call to fetch aid requests
         const response = yield api.getAidRequests()
-        console.log("API Response:", response) // Detailed log of the response
         if (response.kind === "ok" && Array.isArray(response.data)) {
           store.setProp(
             "aidRequests",
@@ -92,13 +103,12 @@ export const AidRequestStoreModel = types
           store.setProp("error", response.message || "Failed to fetch aid requests")
         }
       } catch (error: any) {
-        console.error("Fetch Aid Requests Error:", error) // Log the error
-        store.setProp("error", (error as Error).message)
+        console.error("Fetch Aid Requests Error:", error)
+        store.setProp("error", (error as Error).message || "An unexpected error occurred")
       } finally {
         store.setProp("isLoading", false)
       }
     }),
-    // Other actions...
   }))
 
 export interface AidRequestStore extends Instance<typeof AidRequestStoreModel> {}
