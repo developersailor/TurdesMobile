@@ -5,9 +5,9 @@ export const AidRequestModel = types.model("AidRequest", {
   title: types.string,
   description: types.string,
   status: types.string,
-  type: types.string, // Yeni alan
-  organizationId: types.string, // Yeni alan
-  userId: types.string, // Yeni alan
+  type: types.string, // New field
+  organizationId: types.string, // New field
+  userId: types.string, // New field
   createdAt: types.Date,
   updatedAt: types.Date,
 })
@@ -20,9 +20,9 @@ export const createAidRequestDefaultModel = () =>
     title: "",
     description: "",
     status: "",
-    type: "", // Yeni alan
-    organizationId: "", // Yeni alan
-    userId: "", // Yeni alan
+    type: "", // New field
+    organizationId: "", // New field
+    userId: "", // New field
     createdAt: new Date(),
     updatedAt: new Date(),
   })

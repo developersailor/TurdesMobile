@@ -9,13 +9,14 @@ import { AidRequestModel } from "./AidRequest"
 import { withSetPropAction } from "./helpers/withSetPropAction"
 
 export const AidRequestStoreModel = types
-  .model("AidRequestself", {
+  .model("AidRequestStore", {
     aidRequests: types.array(AidRequestModel),
-    isLoading: types.optional(types.boolean, true),
-    error: types.maybe(types.string),
+    isLoading: types.optional(types.boolean, false),
+    error: types.maybeNull(types.string),
   })
   .actions(withSetPropAction)
   .actions((self) => ({
+    // Flow for creating aid request
     createAidRequest: flow(function* (aidRequestPayload: AidRequestPayload) {
       self.setProp("isLoading", true)
       try {
@@ -25,29 +26,31 @@ export const AidRequestStoreModel = types
         } else {
           self.setProp("error", response.message || "Failed to create aid request")
         }
-      } catch (error: any) {
+      } catch (error) {
         console.error("Create Aid Request Error:", error)
         self.setProp("error", (error as Error).message || "An unexpected error occurred")
       } finally {
         self.setProp("isLoading", false)
       }
     }),
+
+    // Flow for updating aid request status
     updateAidRequest: flow(function* (
-      aidRequestId: number,
+      aidRequestId: string,
       aidRequestUpdatePayload: AidRequestStatusUpdatePayload,
     ) {
       self.setProp("isLoading", true)
       try {
-        const response = yield api.updateAidRequestStatus(aidRequestId, aidRequestUpdatePayload)
+        const response = yield api.updateAidRequestStatus(+aidRequestId, aidRequestUpdatePayload)
         if (response.kind === "ok") {
-          const index = self.aidRequests.findIndex((request) => Number(request.id) === aidRequestId)
+          const index = self.aidRequests.findIndex((request) => request.id === aidRequestId)
           if (index !== -1) {
             self.aidRequests[index] = AidRequestModel.create(response.data)
           }
         } else {
           self.setProp("error", response.message || "Failed to update aid request")
         }
-      } catch (error: any) {
+      } catch (error) {
         console.error("Update Aid Request Error:", error)
         self.setProp("error", (error as Error).message || "An unexpected error occurred")
       } finally {
@@ -55,6 +58,7 @@ export const AidRequestStoreModel = types
       }
     }),
 
+    // Flow for deleting aid request
     deleteAidRequest: flow(function* (id: string) {
       self.setProp("isLoading", true)
       try {
@@ -67,24 +71,34 @@ export const AidRequestStoreModel = types
         } else {
           self.setProp("error", response.message || "Failed to delete aid request")
         }
-      } catch (error: any) {
+      } catch (error) {
         console.error("Delete Aid Request Error:", error)
         self.setProp("error", (error as Error).message || "An unexpected error occurred")
       } finally {
         self.setProp("isLoading", false)
       }
     }),
+
+    // Flow for fetching aid requests
     fetchAidRequests: flow(function* () {
       self.setProp("isLoading", true)
-
-      const response: { kind: string; data: AidRequestResponse[] } = yield api.getAidRequests()
       try {
+        const response = yield api.getAidRequests()
         if (response.kind === "ok" && Array.isArray(response.data)) {
-          self.aidRequests.push(...response.data.map(AidRequestModel.create))
+          self.setProp(
+            "aidRequests",
+            response.data.map((item: AidRequestResponse) =>
+              AidRequestModel.create({
+                ...item,
+                createdAt: new Date(item.createdAt),
+                updatedAt: new Date(item.updatedAt),
+              }),
+            ),
+          )
         } else {
           self.setProp("error", response.kind || "Failed to fetch aid requests")
         }
-      } catch (error: any) {
+      } catch (error) {
         console.error("Fetch Aid Requests Error:", error)
         self.setProp("error", (error as Error).message || "An unexpected error occurred")
       } finally {
@@ -100,5 +114,5 @@ export const createAidRequestStoreDefaultModel = () =>
   types.optional(AidRequestStoreModel, {
     aidRequests: [],
     isLoading: false,
-    error: undefined,
+    error: null,
   })
