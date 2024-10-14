@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react"
+import React, { useState, useRef, useEffect } from "react"
 import { observer } from "mobx-react-lite"
 import { TextInput, ViewStyle, TextStyle, ActivityIndicator, Alert } from "react-native"
 import { Button, Screen, Text, TextField, TextFieldAccessoryProps, Icon } from "../components"
@@ -31,9 +31,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = observer(function LoginSc
     try {
       const response = await authenticationStore.login({ email, password })
       if (response.kind === "ok") {
-        navigate("AidRequest")
+        navigate("AidRequest") // Navigate to AidRequest screen upon successful login
       } else {
-        setErrorMessage(response.kind || "Login failed")
+        Alert.alert("Login failed", response.kind || "An error occurred during login.")
       }
     } catch (error) {
       Alert.alert("Login failed", "An error occurred during login.")
@@ -60,7 +60,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = observer(function LoginSc
       })
       if (response.kind === "ok") {
         setSuccessMessage("Registration successful!")
-        setTimeout(() => navigate("AidRequest"), 1000)
+        setTimeout(() => navigate("Home"), 1000)
       } else {
         setErrorMessage(
           response.kind === "bad-data"
@@ -75,6 +75,16 @@ export const LoginScreen: React.FC<LoginScreenProps> = observer(function LoginSc
     }
   }
 
+  // login ekranı açıldığında token varmı kontrol edeceğiz
+  useEffect(() => {
+    const checkToken = async () => {
+      const token = await authenticationStore.loadToken()
+      if (token) {
+        navigate("AidRequest")
+      }
+    }
+    checkToken()
+  }, [])
   const PasswordRightAccessory: React.FC<TextFieldAccessoryProps> = (props) => (
     <Icon
       icon={isPasswordHidden ? "view" : "hidden"}

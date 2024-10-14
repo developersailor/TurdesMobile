@@ -11,9 +11,6 @@ export const AuthenticationModel = types
     errorMessage: types.maybe(types.string),
   })
   .actions((self) => ({
-    setToken(newToken: string) {
-      self.token = newToken
-    },
     setStatus(newStatus: "idle" | "loading" | "success" | "error") {
       self.status = newStatus
     },

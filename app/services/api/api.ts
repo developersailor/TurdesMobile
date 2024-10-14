@@ -37,10 +37,8 @@ export const DEFAULT_API_CONFIG: ApiConfig = {
 export class Api {
   apisauce: ApisauceInstance
   config: ApiConfig
-  token: string | null = null
-  /**
-   * Set up our API instance. Keep this lightweight!
-   */
+  authToken: string | null = null // To store the auth token
+
   constructor(config: ApiConfig = DEFAULT_API_CONFIG) {
     this.config = config
     this.apisauce = create({
@@ -52,9 +50,24 @@ export class Api {
     })
   }
 
-  setToken(token: string | null) {
-    this.token = token
-    this.apisauce.setHeader("Authorization", `Bearer ${token}`)
+  /**
+   * Set the auth token and update the Authorization header
+   */
+  setAuthToken(token: string) {
+    this.authToken = token
+    this.apisauce.setHeaders({
+      Authorization: `Bearer ${token}`,
+    })
+  }
+
+  /**
+   * Clear the auth token and remove the Authorization header
+   */
+  clearAuthToken() {
+    this.authToken = null
+    this.apisauce.setHeaders({
+      Authorization: "",
+    })
   }
 
   async login(
@@ -69,6 +82,9 @@ export class Api {
       if (problem) return problem
     }
     if (response.data) {
+      if (response.data.token) {
+        this.setAuthToken(response.data.token)
+      }
       return { kind: "ok", data: response.data }
     } else {
       return { kind: "bad-data" }
@@ -112,14 +128,33 @@ export class Api {
     }
   }
 
+  async logout(): Promise<{ kind: "ok" } | GeneralApiProblem> {
+    const response: ApiResponse<unknown> = await this.apisauce.post("/api/auth/logout", {
+      token: this.authToken,
+    })
+    if (!response.ok) {
+      const problem = getGeneralApiProblem(response)
+      if (problem) return problem
+    }
+    // Clear the auth token after logout
+    this.clearAuthToken()
+    return { kind: "ok" }
+  }
+
   async getAidRequests(): Promise<
     { kind: "ok"; data: AidRequestResponse[] | undefined } | GeneralApiProblem
   > {
     const response: ApiResponse<AidRequestResponse[]> = await this.apisauce.get("/api/aidrequests")
     if (!response.ok) {
+      const problem = getGeneralApiProblem(response)
+      if (problem) return problem
+    }
+
+    if (response.data) {
+      return { kind: "ok", data: response.data }
+    } else {
       return { kind: "bad-data" }
     }
-    return { kind: "ok", data: response.data }
   }
 
   async createAidRequest(
@@ -183,15 +218,6 @@ export class Api {
     } else {
       return { kind: "bad-data" }
     }
-  }
-
-  async logout(token: string): Promise<{ kind: "ok" } | GeneralApiProblem> {
-    const response: ApiResponse<unknown> = await this.apisauce.post("/api/auth/logout", { token })
-    if (!response.ok) {
-      const problem = getGeneralApiProblem(response)
-      if (problem) return problem
-    }
-    return { kind: "ok" }
   }
 }
 

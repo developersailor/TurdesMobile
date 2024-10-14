@@ -4,7 +4,6 @@ import { ActivityIndicator } from "react-native"
 import { useStores } from "../models"
 import { toJS } from "mobx"
 import { AppStackScreenProps } from "app/navigators/AppNavigator"
-
 import { ListView, ListItem } from "../components"
 import { AidRequestResponse } from "app/services/api"
 interface AidRequestProps extends AppStackScreenProps<"AidRequest"> {}
@@ -16,6 +15,7 @@ export const AidRequestScreen: React.FC<AidRequestProps> = observer(() => {
     console.log("Aid Requests before fetch:", toJS(aidRequestStore.aidRequests))
     await aidRequestStore.fetchAidRequests()
   }
+
   if (aidRequestStore.isLoading) {
     return <ActivityIndicator size="large" color="#0000ff" />
   }
@@ -29,9 +29,7 @@ export const AidRequestScreen: React.FC<AidRequestProps> = observer(() => {
       )}
       keyExtractor={(item) => item.id}
       refreshing={aidRequestStore.isLoading}
-      onRefresh={async () => {
-        await fetchData()
-      }}
+      onRefresh={fetchData}
       onEndReached={() => {
         console.log("End reached")
       }}
@@ -39,3 +37,5 @@ export const AidRequestScreen: React.FC<AidRequestProps> = observer(() => {
     />
   )
 })
+
+export default AidRequestScreen

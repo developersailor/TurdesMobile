@@ -19,12 +19,7 @@ export const AuthenticationStoreModel = types
       store.authentication.setStatus("loading")
       try {
         const response: { kind: string; data?: LoginResponse } = yield api.login(payload)
-        if (response.kind === "ok" && response.data?.token) {
-          store.authentication.setToken(response.data.token)
-          store.authentication.setStatus("success")
-          store.authentication.setToken(response.data.token)
-          yield AsyncStorage.setItem("token", response.data.token) // Save token
-        } else {
+        if (response.data == null) {
           const errorMessage = response.kind !== "ok" ? response.kind : "Login failed"
           store.authentication.setError(errorMessage)
           store.authentication.setStatus("error")
@@ -44,9 +39,7 @@ export const AuthenticationStoreModel = types
       try {
         const response: { kind: string; data?: RegisterResponse } = yield api.register(payload)
         if (response.kind === "ok" && response.data?.token) {
-          store.authentication.setToken(response.data.token)
           store.authentication.setStatus("success")
-          yield AsyncStorage.setItem("token", response.data.token) // Save token
         } else {
           const errorMessage = response.kind === "bad-data" ? response.kind : "Registration failed"
           store.authentication.setError(errorMessage)
@@ -63,6 +56,7 @@ export const AuthenticationStoreModel = types
     }),
     loadToken: flow(function* () {
       const token = yield AsyncStorage.getItem("token")
+
       return token
     }),
     logout: flow(function* () {
