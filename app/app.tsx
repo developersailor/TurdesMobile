@@ -59,24 +59,15 @@ interface AppProps {
 function App(props: AppProps) {
   useEffect(() => {
     // Request permission to receive notifications
-    messaging()
-      .requestPermission()
-      .then((authStatus) => {
-        const enabled =
-          authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-          authStatus === messaging.AuthorizationStatus.PROVISIONAL
-
-        if (enabled) {
-          console.log("Authorization status:", authStatus)
-        }
-      })
-
-    // Get the device token
-    messaging()
-      .getToken()
-      .then((token) => {
-        console.log("Device FCM Token:", token)
-      })
+    const requestUserPermission = async () => {
+      await messaging().requestPermission()
+    }
+    const getToken = async () => {
+      // Get the device token
+      await messaging().getToken()
+    }
+    getToken()
+    requestUserPermission()
 
     // Create a notification channel
     PushNotification.createChannel(
@@ -94,7 +85,7 @@ function App(props: AppProps) {
     // Listen for messages when the app is in the foreground
     const unsubscribe = messaging().onMessage(async (remoteMessage) => {
       PushNotification.localNotification({
-        channelId: "default-channel-id", // Required for Android 8.0+
+        channelId: "turdes-notify-channel", // Required for Android 8.0+
         title: remoteMessage.notification?.title ?? "No title",
         message: remoteMessage.notification?.body ?? "No message body",
       })

@@ -141,9 +141,7 @@ export class Api {
     return { kind: "ok" }
   }
 
-  async getAidRequests(): Promise<
-    { kind: "ok"; data: AidRequestResponse[] | undefined } | GeneralApiProblem
-  > {
+  async getAidRequests(): Promise<{ kind: "ok"; data: AidRequestResponse[] } | GeneralApiProblem> {
     const response: ApiResponse<AidRequestResponse[]> = await this.apisauce.get("/api/aidrequests")
     if (!response.ok) {
       const problem = getGeneralApiProblem(response)

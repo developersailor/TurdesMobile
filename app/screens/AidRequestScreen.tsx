@@ -12,8 +12,8 @@ export const AidRequestScreen: React.FC<AidRequestProps> = observer(() => {
   const { aidRequestStore } = useStores()
 
   const fetchData = async () => {
-    console.log("Aid Requests before fetch:", toJS(aidRequestStore.aidRequests))
     await aidRequestStore.fetchAidRequests()
+    console.log("Data:", toJS(await aidRequestStore.fetchAidRequests()))
   }
 
   if (aidRequestStore.isLoading) {

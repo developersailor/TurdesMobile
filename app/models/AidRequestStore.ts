@@ -1,4 +1,4 @@
-import { Instance, SnapshotOut, SnapshotIn, types, flow } from "mobx-state-tree"
+import { Instance, SnapshotOut, SnapshotIn, types } from "mobx-state-tree"
 import {
   AidRequestPayload,
   AidRequestResponse,
@@ -16,15 +16,13 @@ export const AidRequestStoreModel = types
   })
   .actions(withSetPropAction)
   .actions((self) => ({
-    // Flow for creating aid request
-    createAidRequest: flow(function* (aidRequestPayload: AidRequestPayload) {
+    // Async function for creating aid request
+    async createAidRequest(aidRequestPayload: AidRequestPayload) {
       self.setProp("isLoading", true)
       try {
-        const response = yield api.createAidRequest(aidRequestPayload)
+        const response = await api.createAidRequest(aidRequestPayload)
         if (response.kind === "ok") {
           self.aidRequests.push(AidRequestModel.create(response.data))
-        } else {
-          self.setProp("error", response.message || "Failed to create aid request")
         }
       } catch (error) {
         console.error("Create Aid Request Error:", error)
@@ -32,23 +30,21 @@ export const AidRequestStoreModel = types
       } finally {
         self.setProp("isLoading", false)
       }
-    }),
+    },
 
-    // Flow for updating aid request status
-    updateAidRequest: flow(function* (
+    // Async function for updating aid request status
+    async updateAidRequest(
       aidRequestId: string,
       aidRequestUpdatePayload: AidRequestStatusUpdatePayload,
     ) {
       self.setProp("isLoading", true)
       try {
-        const response = yield api.updateAidRequestStatus(+aidRequestId, aidRequestUpdatePayload)
+        const response = await api.updateAidRequestStatus(+aidRequestId, aidRequestUpdatePayload)
         if (response.kind === "ok") {
           const index = self.aidRequests.findIndex((request) => request.id === aidRequestId)
           if (index !== -1) {
             self.aidRequests[index] = AidRequestModel.create(response.data)
           }
-        } else {
-          self.setProp("error", response.message || "Failed to update aid request")
         }
       } catch (error) {
         console.error("Update Aid Request Error:", error)
@@ -56,20 +52,18 @@ export const AidRequestStoreModel = types
       } finally {
         self.setProp("isLoading", false)
       }
-    }),
+    },
 
-    // Flow for deleting aid request
-    deleteAidRequest: flow(function* (id: string) {
+    // Async function for deleting aid request
+    async deleteAidRequest(id: string) {
       self.setProp("isLoading", true)
       try {
-        const response = yield api.deleteAidRequest(id)
+        const response = await api.deleteAidRequest(id)
         if (response.kind === "ok") {
           self.setProp(
             "aidRequests",
             self.aidRequests.filter((request) => request.id !== id),
           )
-        } else {
-          self.setProp("error", response.message || "Failed to delete aid request")
         }
       } catch (error) {
         console.error("Delete Aid Request Error:", error)
@@ -77,13 +71,13 @@ export const AidRequestStoreModel = types
       } finally {
         self.setProp("isLoading", false)
       }
-    }),
+    },
 
-    // Flow for fetching aid requests
-    fetchAidRequests: flow(function* () {
+    // Async function for fetching aid requests
+    async fetchAidRequests() {
       self.setProp("isLoading", true)
       try {
-        const response = yield api.getAidRequests()
+        const response = await api.getAidRequests()
         if (response.kind === "ok" && Array.isArray(response.data)) {
           self.setProp(
             "aidRequests",
@@ -104,7 +98,10 @@ export const AidRequestStoreModel = types
       } finally {
         self.setProp("isLoading", false)
       }
-    }),
+    },
+    getAidRequest() {
+      return self.aidRequests
+    },
   }))
 
 export interface AidRequestStore extends Instance<typeof AidRequestStoreModel> {}
