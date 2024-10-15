@@ -21,6 +21,7 @@ import type {
   OrganizationResponse,
   LoginPayload,
 } from "./api.types"
+import { loadString, saveString } from "app/utils/storage"
 
 /**
  * Configuring the apisauce instance.
@@ -46,6 +47,7 @@ export class Api {
       timeout: this.config.timeout,
       headers: {
         Accept: "application/json",
+        Authorization: this.authToken,
       },
     })
   }
@@ -53,11 +55,23 @@ export class Api {
   /**
    * Set the auth token and update the Authorization header
    */
-  setAuthToken(token: string) {
-    this.authToken = token
-    this.apisauce.setHeaders({
-      Authorization: `Bearer ${token}`,
-    })
+  async setAndCheckAuthToken(token: string | null) {
+    const tokenFromStorage: string | null = await loadString("token")
+    if (tokenFromStorage) {
+      this.authToken = tokenFromStorage
+      this.apisauce.setHeaders({
+        Authorization: `Bearer ${tokenFromStorage}`,
+      })
+    } else if (token === null) {
+      this.authToken = token
+      this.apisauce.setHeaders({
+        Authorization: `Bearer ${token}`,
+      })
+      if (token !== null) {
+        saveString("token", token)
+      }
+    }
+    return token
   }
 
   /**
@@ -82,9 +96,7 @@ export class Api {
       if (problem) return problem
     }
     if (response.data) {
-      if (response.data.token) {
-        this.setAuthToken(response.data.token)
-      }
+      this.setAndCheckAuthToken(response.data.token ?? null)
       return { kind: "ok", data: response.data }
     } else {
       return { kind: "bad-data" }

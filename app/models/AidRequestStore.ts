@@ -1,22 +1,16 @@
 import { Instance, SnapshotOut, SnapshotIn, types } from "mobx-state-tree"
-import {
-  AidRequestPayload,
-  AidRequestResponse,
-  AidRequestStatusUpdatePayload,
-  api,
-} from "../services/api"
+import { AidRequestPayload, AidRequestStatusUpdatePayload, api } from "../services/api"
 import { AidRequestModel } from "./AidRequest"
 import { withSetPropAction } from "./helpers/withSetPropAction"
 
 export const AidRequestStoreModel = types
   .model("AidRequestStore", {
-    aidRequests: types.array(AidRequestModel),
+    aidRequests: types.array(AidRequestModel), // Stores the array of AidRequests
     isLoading: types.optional(types.boolean, false),
     error: types.maybeNull(types.string),
   })
   .actions(withSetPropAction)
   .actions((self) => ({
-    // Async function for creating aid request
     async createAidRequest(aidRequestPayload: AidRequestPayload) {
       self.setProp("isLoading", true)
       try {
@@ -32,7 +26,6 @@ export const AidRequestStoreModel = types
       }
     },
 
-    // Async function for updating aid request status
     async updateAidRequest(
       aidRequestId: string,
       aidRequestUpdatePayload: AidRequestStatusUpdatePayload,
@@ -54,51 +47,45 @@ export const AidRequestStoreModel = types
       }
     },
 
-    // Async function for deleting aid request
     async deleteAidRequest(id: string) {
       self.setProp("isLoading", true)
+      const response = await api.deleteAidRequest(id)
       try {
-        const response = await api.deleteAidRequest(id)
         if (response.kind === "ok") {
           self.setProp(
             "aidRequests",
             self.aidRequests.filter((request) => request.id !== id),
           )
         }
+        return response
       } catch (error) {
         console.error("Delete Aid Request Error:", error)
         self.setProp("error", (error as Error).message || "An unexpected error occurred")
+        return error
       } finally {
         self.setProp("isLoading", false)
       }
     },
-
-    // Async function for fetching aid requests
     async fetchAidRequests() {
       self.setProp("isLoading", true)
+      const response = await api.getAidRequests()
       try {
-        const response = await api.getAidRequests()
-        if (response.kind === "ok" && Array.isArray(response.data)) {
+        if (response.kind === "ok" && response.data !== null) {
           self.setProp(
             "aidRequests",
-            response.data.map((item: AidRequestResponse) =>
-              AidRequestModel.create({
-                ...item,
-                createdAt: new Date(item.createdAt),
-                updatedAt: new Date(item.updatedAt),
-              }),
-            ),
+            response.data.map((item) => AidRequestModel.create(item)),
           )
         } else {
           self.setProp("error", response.kind || "Failed to fetch aid requests")
         }
       } catch (error) {
-        console.error("Fetch Aid Requests Error:", error)
         self.setProp("error", (error as Error).message || "An unexpected error occurred")
       } finally {
         self.setProp("isLoading", false)
       }
     },
+  }))
+  .views((self) => ({
     getAidRequest() {
       return self.aidRequests
     },
