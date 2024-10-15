@@ -21,8 +21,7 @@ import type {
   OrganizationResponse,
   LoginPayload,
 } from "./api.types"
-import { loadString, saveString } from "app/utils/storage"
-
+import { loadString } from "app/utils/storage"
 /**
  * Configuring the apisauce instance.
  */
@@ -38,7 +37,6 @@ export const DEFAULT_API_CONFIG: ApiConfig = {
 export class Api {
   apisauce: ApisauceInstance
   config: ApiConfig
-  authToken: string | null = null // To store the auth token
 
   constructor(config: ApiConfig = DEFAULT_API_CONFIG) {
     this.config = config
@@ -47,40 +45,7 @@ export class Api {
       timeout: this.config.timeout,
       headers: {
         Accept: "application/json",
-        Authorization: this.authToken,
       },
-    })
-  }
-
-  /**
-   * Set the auth token and update the Authorization header
-   */
-  async setAndCheckAuthToken(token: string | null) {
-    const tokenFromStorage: string | null = await loadString("token")
-    if (tokenFromStorage) {
-      this.authToken = tokenFromStorage
-      this.apisauce.setHeaders({
-        Authorization: `Bearer ${tokenFromStorage}`,
-      })
-    } else if (token === null) {
-      this.authToken = token
-      this.apisauce.setHeaders({
-        Authorization: `Bearer ${token}`,
-      })
-      if (token !== null) {
-        saveString("token", token)
-      }
-    }
-    return token
-  }
-
-  /**
-   * Clear the auth token and remove the Authorization header
-   */
-  clearAuthToken() {
-    this.authToken = null
-    this.apisauce.setHeaders({
-      Authorization: "",
     })
   }
 
@@ -96,7 +61,6 @@ export class Api {
       if (problem) return problem
     }
     if (response.data) {
-      this.setAndCheckAuthToken(response.data.token ?? null)
       return { kind: "ok", data: response.data }
     } else {
       return { kind: "bad-data" }
@@ -141,29 +105,50 @@ export class Api {
   }
 
   async logout(): Promise<{ kind: "ok" } | GeneralApiProblem> {
-    const response: ApiResponse<unknown> = await this.apisauce.post("/api/auth/logout", {
-      token: this.authToken,
-    })
+    const response: ApiResponse<unknown> = await this.apisauce.post("/api/auth/logout")
     if (!response.ok) {
       const problem = getGeneralApiProblem(response)
       if (problem) return problem
     }
-    // Clear the auth token after logout
-    this.clearAuthToken()
+
     return { kind: "ok" }
   }
 
-  async getAidRequests(): Promise<{ kind: "ok"; data: AidRequestResponse[] } | GeneralApiProblem> {
-    const response: ApiResponse<AidRequestResponse[]> = await this.apisauce.get("/api/aidrequests")
-    if (!response.ok) {
-      const problem = getGeneralApiProblem(response)
-      if (problem) return problem
+  async getAidRequests(): Promise<{ message: number; data: AidRequestResponse[] }> {
+    const token = await loadString("token")
+    const response: ApiResponse<AidRequestResponse[]> = await this.apisauce.get(
+      "/api/aidrequests",
+      undefined, // İlk parametre GET istekleri için genellikle `null` veya `undefined` olur
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    )
+    const rawData = response.data
+    if (!rawData || !Array.isArray(rawData)) {
+      // Eğer rawData undefined veya array değilse boş bir dizi döndür
+      return { message: response.status ?? 0, data: [] }
     }
+    const aidRequests: AidRequestResponse[] =
+      rawData?.map((data) => {
+        return {
+          id: data.id,
+          title: data.title,
+          status: data.status,
+          type: data.type,
+          description: data.description,
+          organizationId: data.organizationId,
+          userId: data.userId,
+          createdAt: new Date(data.createdAt),
+          updatedAt: new Date(data.updatedAt),
+        }
+      }) ?? []
 
-    if (response.data) {
-      return { kind: "ok", data: response.data }
+    if (response.ok) {
+      return { message: response.status ?? 0, data: aidRequests }
     } else {
-      return { kind: "bad-data" }
+      return { message: response.status ?? 0, data: [] }
     }
   }
 

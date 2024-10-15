@@ -1,3 +1,4 @@
+import { loadString, saveString } from "app/utils/storage"
 import { types } from "mobx-state-tree"
 
 export const AuthenticationModel = types
@@ -19,5 +20,12 @@ export const AuthenticationModel = types
     },
     clearError() {
       self.errorMessage = ""
+    },
+    async setToken(data: string) {
+      const tokenFromStorage: string | null = await loadString("token")
+      if (data !== null) {
+        saveString("token", data)
+      }
+      return tokenFromStorage
     },
   }))

@@ -4,12 +4,18 @@ import { AidRequestModel } from "./AidRequest"
 import { withSetPropAction } from "./helpers/withSetPropAction"
 
 export const AidRequestStoreModel = types
-  .model("AidRequestStore", {
-    aidRequests: types.array(AidRequestModel), // Stores the array of AidRequests
+  .model("AidRequestStore")
+  .props({
+    aidRequests: types.array(AidRequestModel),
     isLoading: types.optional(types.boolean, false),
-    error: types.maybeNull(types.string),
+    error: "",
   })
   .actions(withSetPropAction)
+  .views((self) => ({
+    getAidRequest() {
+      return self.aidRequests
+    },
+  }))
   .actions((self) => ({
     async createAidRequest(aidRequestPayload: AidRequestPayload) {
       self.setProp("isLoading", true)
@@ -70,33 +76,28 @@ export const AidRequestStoreModel = types
       self.setProp("isLoading", true)
       const response = await api.getAidRequests()
       try {
-        if (response.kind === "ok" && response.data !== null) {
-          self.setProp(
-            "aidRequests",
-            response.data.map((item) => AidRequestModel.create(item)),
+        if (response.message !== 0 && response.data && Array.isArray(response.data)) {
+          response.data.map((aidRequest) =>
+            self.aidRequests.push(AidRequestModel.create(aidRequest)),
           )
         } else {
-          self.setProp("error", response.kind || "Failed to fetch aid requests")
+          console.error("Unexpected response format or failure", response)
+          self.setProp(
+            "error",
+            typeof response.message === "string"
+              ? response.message
+              : "Failed to fetch aid requests",
+          )
         }
       } catch (error) {
+        console.error("Fetch Aid Requests Error:", error)
         self.setProp("error", (error as Error).message || "An unexpected error occurred")
       } finally {
         self.setProp("isLoading", false)
       }
     },
   }))
-  .views((self) => ({
-    getAidRequest() {
-      return self.aidRequests
-    },
-  }))
 
 export interface AidRequestStore extends Instance<typeof AidRequestStoreModel> {}
 export interface AidRequestStoreSnapshot extends SnapshotOut<typeof AidRequestStoreModel> {}
 export interface AidRequestStoreSnapshotIn extends SnapshotIn<typeof AidRequestStoreModel> {}
-export const createAidRequestStoreDefaultModel = () =>
-  types.optional(AidRequestStoreModel, {
-    aidRequests: [],
-    isLoading: false,
-    error: null,
-  })

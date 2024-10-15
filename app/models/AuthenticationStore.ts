@@ -9,7 +9,6 @@ import {
   RegisterResponse,
 } from "../services/api/api.types"
 import { withSetPropAction } from "./helpers/withSetPropAction"
-import { saveString } from "app/utils/storage"
 export const AuthenticationStoreModel = types
   .model("AuthenticationStore", {
     authentication: types.optional(AuthenticationModel, {}),
@@ -21,7 +20,7 @@ export const AuthenticationStoreModel = types
       try {
         const response: { kind: string; data?: LoginResponse } = yield api.login(payload)
         if (response.data?.token) {
-          saveString("token", response.data.token)
+          store.authentication.setStatus("success")
         }
         if (response.data == null || response.data.token == null) {
           const errorMessage = response.kind !== "ok" ? response.kind : "Login failed"
@@ -58,14 +57,14 @@ export const AuthenticationStoreModel = types
         }
       }
     }),
-    loadToken: flow(function* () {
-      const token = yield AsyncStorage.getItem("token")
-
-      return token
-    }),
     logout: flow(function* () {
       yield AsyncStorage.removeItem("token")
     }),
+  }))
+  .views((self) => ({
+    get isAuthenticated() {
+      return !!self.authentication.token
+    },
   }))
 
 export interface AuthenticationStore extends Instance<typeof AuthenticationStoreModel> {}
