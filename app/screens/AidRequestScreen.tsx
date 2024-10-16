@@ -1,60 +1,68 @@
-import React, { useEffect } from "react"
-import { observer } from "mobx-react-lite"
-import { useStores } from "../models"
-import { AppStackScreenProps } from "app/navigators/AppNavigator"
+import React, { useEffect, useState } from "react"
+import { ActivityIndicator, Text, View } from "react-native"
 import { ListView, ListItem } from "../components"
+import { useStores } from "../models"
+import { navigate } from "../navigators/navigationUtilities"
 import { AidRequestResponse } from "app/services/api"
-import { ActivityIndicator, View, Text } from "react-native"
-import { toJS } from "mobx"
+import { AppStackScreenProps } from "app/navigators/AppNavigator"
+import { observer } from "mobx-react-lite"
 
-interface AidRequestProps extends AppStackScreenProps<"AidRequest"> {}
+export interface AidRequestScreenProps extends AppStackScreenProps<"AidRequest"> {}
 
-export const AidRequestScreen: React.FC<AidRequestProps> = observer(() => {
-  const { aidRequestStore } = useStores()
+export const AidRequestScreen: React.FC<AidRequestScreenProps> = observer(
+  ({ navigation, route }) => {
+    const { aidRequestStore } = useStores()
+    const [isLoading, setIsLoading] = useState(false)
 
-  // Function to fetch aid requests
-  const fetchData = async () => {
-    await aidRequestStore.fetchAidRequests()
-  }
+    const fetchData = async () => {
+      setIsLoading(true)
+      await aidRequestStore.fetchAidRequests()
+      setIsLoading(false)
+    }
 
-  // Fetch data when the component mounts
-  useEffect(() => {
-    fetchData()
-    console.log(aidRequestStore.getAidRequest())
-  }, [aidRequestStore]) // Add aidRequestStore to the dependency array
+    useEffect(() => {
+      fetchData()
+    }, [])
 
-  // Render the loading spinner or the list
-  if (aidRequestStore.isLoading) {
-    return <ActivityIndicator size="large" /> // Display loading indicator while fetching
-  }
+    useEffect(() => {
+      if (aidRequestStore.error === "unauthorized") {
+        navigate("Login")
+      }
+    }, [aidRequestStore.error])
 
-  if (aidRequestStore.error) {
+    if (aidRequestStore.isLoading || isLoading) {
+      return <ActivityIndicator size="large" /> // Display loading indicator while fetching
+    }
+
+    if (aidRequestStore.error && aidRequestStore.error !== "unauthorized") {
+      return <Text>Error loading data: {aidRequestStore.error}</Text> // Display error message
+    }
+    if (aidRequestStore.error && aidRequestStore.error !== "unauthorized") {
+      return (
+        <View>
+          <Text>Error loading data: {aidRequestStore.error}</Text>
+          <Text>Please check your network connection or try again later.</Text>
+        </View>
+      ) // Display error message
+    }
     return (
-      <View>
-        <Text>Error loading aid requests: {aidRequestStore.error}</Text>
-      </View>
+      <ListView
+        data={aidRequestStore.aidRequests.slice()} // Directly use `aidRequests` from the store
+        estimatedItemSize={100}
+        renderItem={({ item }: { item: AidRequestResponse }) => (
+          <ListItem text={item.title} onPress={() => console.log("Pressed:", item)}>
+            <Text>{item.description}</Text>
+            <Text>{item.status}</Text>
+          </ListItem>
+        )}
+        keyExtractor={(item) => item.id.toString()} // Ensure id is a string
+        refreshing={isLoading} // Use `isLoading` for pull-to-refresh
+        onRefresh={fetchData} // Re-fetch data when pulled to refresh
+        onEndReached={() => {
+          console.log("End reached")
+        }}
+        onEndReachedThreshold={0.5}
+      />
     )
-  }
-
-  return (
-    <ListView
-      data={toJS(aidRequestStore.getAidRequest())} // Directly use `aidRequests` from the store
-      estimatedItemSize={100}
-      renderItem={({ item }: { item: AidRequestResponse }) => (
-        <ListItem text={item.title} onPress={() => console.log("Pressed:", item)}>
-          <Text>{item.description}</Text>
-          <Text>{item.status}</Text>
-        </ListItem>
-      )}
-      keyExtractor={(item) => item.id.toString()} // Ensure id is a string
-      refreshing={aidRequestStore.isLoading} // Use `isLoading` for pull-to-refresh
-      onRefresh={fetchData} // Re-fetch data when pulled to refresh
-      onEndReached={() => {
-        console.log("End reached")
-      }}
-      onEndReachedThreshold={0.5}
-    />
-  )
-})
-
-export default AidRequestScreen
+  },
+)

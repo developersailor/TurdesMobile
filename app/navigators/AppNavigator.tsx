@@ -84,8 +84,7 @@ const AppStack = observer(function AppStack() {
   )
 })
 
-export interface NavigationProps
-  extends Partial<React.ComponentProps<typeof NavigationContainer>> {}
+export type NavigationProps = Partial<React.ComponentProps<typeof NavigationContainer>>
 
 export const AppNavigator = observer(function AppNavigator(props: NavigationProps) {
   const colorScheme = useColorScheme()

@@ -35,7 +35,7 @@ export interface User {
   phone: string
   passwordHash: string
   role: string
-  refreshToken: any
+  refreshToken: string
   createdAt: string
   updatedAt: string
 }

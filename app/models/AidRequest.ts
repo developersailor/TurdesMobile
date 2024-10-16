@@ -17,6 +17,6 @@ export const AidRequestModel = types
   .views((self) => ({})) // eslint-disable-line @typescript-eslint/no-unused-vars
   .actions((self) => ({})) // eslint-disable-line @typescript-eslint/no-unused-vars
 
-export interface AidRequest extends Instance<typeof AidRequestModel> {}
-export interface AidRequestSnapshot extends SnapshotOut<typeof AidRequestModel> {}
-export interface AidRequestSnapshotIn extends SnapshotIn<typeof AidRequestModel> {}
+export type AidRequest = Instance<typeof AidRequestModel>
+export type AidRequestSnapshot = SnapshotOut<typeof AidRequestModel>
+export type AidRequestSnapshotIn = SnapshotIn<typeof AidRequestModel>

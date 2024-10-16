@@ -21,7 +21,7 @@ import type {
   OrganizationResponse,
   LoginPayload,
 } from "./api.types"
-import { loadString } from "app/utils/storage"
+import { loadString, saveString } from "app/utils/storage"
 /**
  * Configuring the apisauce instance.
  */
@@ -61,6 +61,9 @@ export class Api {
       if (problem) return problem
     }
     if (response.data) {
+      if (response.data.token) {
+        saveString("token", response.data.token)
+      }
       return { kind: "ok", data: response.data }
     } else {
       return { kind: "bad-data" }
@@ -114,7 +117,7 @@ export class Api {
     return { kind: "ok" }
   }
 
-  async getAidRequests(): Promise<{ message: number; data: AidRequestResponse[] }> {
+  async getAidRequests(): Promise<{ kind: "ok"; data: AidRequestResponse[] } | GeneralApiProblem> {
     const token = await loadString("token")
     const response: ApiResponse<AidRequestResponse[]> = await this.apisauce.get(
       "/api/aidrequests",
@@ -125,30 +128,19 @@ export class Api {
         },
       },
     )
-    const rawData = response.data
-    if (!rawData || !Array.isArray(rawData)) {
-      // Eğer rawData undefined veya array değilse boş bir dizi döndür
-      return { message: response.status ?? 0, data: [] }
-    }
-    const aidRequests: AidRequestResponse[] =
-      rawData?.map((data) => {
-        return {
-          id: data.id,
-          title: data.title,
-          status: data.status,
-          type: data.type,
-          description: data.description,
-          organizationId: data.organizationId,
-          userId: data.userId,
-          createdAt: new Date(data.createdAt),
-          updatedAt: new Date(data.updatedAt),
-        }
-      }) ?? []
 
-    if (response.ok) {
-      return { message: response.status ?? 0, data: aidRequests }
+    if (!response.ok) {
+      if (response.status === 401) {
+        return { kind: "unauthorized" }
+      }
+      const problem = getGeneralApiProblem(response)
+      if (problem) return problem
+    }
+
+    if (response.data) {
+      return { kind: "ok", data: response.data }
     } else {
-      return { message: response.status ?? 0, data: [] }
+      return { kind: "bad-data" }
     }
   }
 
@@ -201,9 +193,8 @@ export class Api {
   async getOrganizations(): Promise<
     { kind: "ok"; data: OrganizationResponse[] } | GeneralApiProblem
   > {
-    const response: ApiResponse<OrganizationResponse[]> = await this.apisauce.get(
-      "/api/organizations",
-    )
+    const response: ApiResponse<OrganizationResponse[]> =
+      await this.apisauce.get("/api/organizations")
     if (!response.ok) {
       const problem = getGeneralApiProblem(response)
       if (problem) return problem

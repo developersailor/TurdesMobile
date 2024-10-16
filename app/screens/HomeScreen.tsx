@@ -6,7 +6,7 @@ import { AppStackScreenProps } from "app/navigators"
 import { useStores } from "app/models"
 import { goBack, navigate } from "app/navigators/navigationUtilities"
 
-interface HomeScreenProps extends AppStackScreenProps<"Home"> {}
+type HomeScreenProps = AppStackScreenProps<"Home">
 
 export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen() {
   // Pull in one of our MST stores

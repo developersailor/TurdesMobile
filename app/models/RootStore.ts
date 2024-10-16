@@ -8,7 +8,10 @@ import { AuthenticationModel } from "./Authentication"
  * A RootStore model.
  */
 export const RootStoreModel = types.model("RootStore").props({
-  aidRequestStore: types.optional(AidRequestStoreModel, {}),
+  aidRequestStore: types.optional(AidRequestStoreModel, {
+    aidRequests: [],
+    isLoading: false,
+  }),
   aidRequest: types.optional(AidRequestModel, {
     id: "",
     title: "",
@@ -27,8 +30,8 @@ export const RootStoreModel = types.model("RootStore").props({
 /**
  * The RootStore instance.
  */
-export interface RootStore extends Instance<typeof RootStoreModel> {}
+export type RootStore = Instance<typeof RootStoreModel>
 /**
  * The data of a RootStore.
  */
-export interface RootStoreSnapshot extends SnapshotOut<typeof RootStoreModel> {}
+export type RootStoreSnapshot = SnapshotOut<typeof RootStoreModel>
